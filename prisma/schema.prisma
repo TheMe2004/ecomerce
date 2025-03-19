@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// prisma/schema.prisma
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // uncomment next line if you use Prisma <5.10
+  // directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+enum Currency {
+  AZN
+  USD
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  role      UserRole @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String
+  slug      String    @default("")
+  img       String?  
+  parentId  Int?
+  parent    Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryHierarchy")
+  products  Product[]
+  sliders   Slider[]
+}
+
+
+model Product {
+  id         Int              @id @default(autoincrement())
+  categories Category[]
+  specs      ProductSpec[]
+    description String?
+   slug        String   @unique
+  variants   ProductVariant[]
+ title       String
+  Slider Slider[]
+}
+
+model Slider {
+  id          Int    @id @default(autoincrement())
+  img         String
+  mobile      String @default("default-mobile")
+  Title       String @default("default title")
+  description String @default("default description")
+  buttonname1 String @default("default button1")
+  buttonname2 String @default("default button2")
+  parentId    Int?
+  category    Category? @relation(fields: [categoryId], references: [id])
+  categoryId  Int?
+  product     Product?  @relation(fields: [productId], references: [id])
+  productId   Int?
+}
+
+
+model ProductSpec {
+  id        Int                @id @default(autoincrement())
+  key       String
+  name      String
+  values    ProductSpecValue[]
+  product   Product?           @relation(fields: [productId], references: [id])
+  productId Int?
+}
+
+model ProductSpecValue {
+  id            Int          @id @default(autoincrement())
+  key           String
+  value         String
+  productSpec   ProductSpec? @relation(fields: [productSpecId], references: [id])
+  productSpecId Int?
+}
+
+model ProductVariant {
+  id          Int                  @id @default(autoincrement())
+  stock       Int                  @default(0)
+  price       Int                  @default(0)
+  currency    Currency             @default(USD)
+  discount    Int                  @default(0)
+  slug        String               @default("default-variant")
+  images      String[]
+  size        String[]
+  description String?
+  shipping    String
+  returns     String
+  specs       ProductVariantSpec[]
+  product     Product?             @relation(fields: [productId], references: [id])
+  productId   Int?
+}
+
+model ProductVariantSpec {
+  id               Int             @id @default(autoincrement())
+  key              String
+  value            String
+  productVariant   ProductVariant? @relation(fields: [productVariantId], references: [id])
+  productVariantId Int?
+}
